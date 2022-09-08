@@ -1,3 +1,4 @@
+import math
 import numpy as np
 from PIL import Image
 import cv2
@@ -26,9 +27,7 @@ def set_random_seed(random_seed=None):
 
 def show_grid(data, titles=None):
     """Make grid."""
-    print(data.shape)
     data = data.numpy().transpose((0, 2, 3, 1))
-    print(data.shape)
 
     plt.figure(figsize=(8 * 2, 4 * 2))
     for i in range(16):
@@ -39,6 +38,35 @@ def show_grid(data, titles=None):
             plt.title(titles[i])
     plt.tight_layout()
     plt.show()
+
+
+def split_dataset(dataset, valid_size=0.2):
+    """Split dataset into train and validation set."""
+
+    dataset_len = len(dataset)
+    indices = torch.LongTensor(range(dataset_len))
+    split = int(math.floor(valid_size * dataset_len))
+
+    # Shuffle the Indices
+    indices = indices[torch.randperm(dataset_len)]
+
+    # Split the train and valid set
+    train_idx, valid_idx = indices[split:], indices[:split]
+    train_sampler = torch.utils.data.sampler.SubsetRandomSampler(train_idx)
+    valid_sampler = torch.utils.data.sampler.SubsetRandomSampler(valid_idx)
+
+    return train_sampler, valid_sampler
+
+
+class PILToTensor_for_targets:
+    def __call__(self, target):
+        target = torch.as_tensor(np.array(target), dtype=torch.int64)
+        # to make a binary mask, set gray(2) to 0 and black and white pet to 1
+        target[(target == 1) | (target == 3)] = 1
+        target[target == 2] = 0
+        # target = scipy.ndimage.median_filter(target, size=(3,3))
+        target = target[None, :, :]
+        return target
 
 
 def preprocess_image(

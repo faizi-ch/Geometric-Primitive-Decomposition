@@ -71,7 +71,7 @@ class MNISTDataset(Dataset):
         data = self.dataset[index]
         image = torch.permute(data[0], (1, 2, 0)).numpy()
 
-        image, coords, distances = preprocess_image(image, self.transforms)
+        image, coords, distances = preprocess_image(image, self.transforms, mnist=True)
 
         self.__cache[index] = (image, coords, distances)
 
