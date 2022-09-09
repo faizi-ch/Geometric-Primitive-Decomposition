@@ -112,6 +112,32 @@ class SquareEval(ShapeEval):
         return dis + ret
 
 
+class TriangleEval(ShapeEval):
+    def __init__(self, num_shape, num_dim):
+        super().__init__(num_shape, num_dim, num_dim)
+
+    def evalpt(self, pt, param):
+        """
+        pt: [batch_sz, num_shape, num_pt, dim]
+        param: [batch_sz, num_shape, num_param]
+        """
+
+        trig_angle = param.unsqueeze(dim=-2)
+
+        q = torch.cat(
+            (
+                pt[..., [0]].norm(dim=-1, p=2, keepdim=True),
+                pt[..., [1]],
+            ),
+            dim=-1,
+        )
+        d1 = -q[..., 1] - trig_angle[..., -1]
+        d2 = (q * trig_angle[..., [0, 1]]).sum(dim=-1).max(q[..., 1])
+        d1d2 = torch.stack((d1, d2), dim=-1).clamp_min(0)
+
+        return d1d2.norm(p=2, dim=-1) + d1.max(d2).clamp_max(0)
+
+
 class MultipleShapesEval(nn.Module):
     def __init__(self, parts):
         super().__init__()
@@ -129,4 +155,10 @@ class MultipleShapesEval(nn.Module):
 
 
 def MultipleShapesEvaluation(num_shape):
-    return MultipleShapesEval([SquareEval(num_shape), CircleEval(num_shape)])
+    """
+    choose the shapes you want to use
+    """
+    # return MultipleShapesEval([SquareEval(num_shape), CircleEval(num_shape)])
+    # return MultipleShapesEval([CircleEval(num_shape), TriangleEval(num_shape)])
+    # return MultipleShapesEval([TriangleEval(num_shape)])
+    return MultipleShapesEval([SquareEval(num_shape)])
