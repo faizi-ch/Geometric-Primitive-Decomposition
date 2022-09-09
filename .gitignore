@@ -1,1 +1,4 @@
-/datasets/
+datasets/
+trained_models/
+logs/
+__pycache__/
