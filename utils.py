@@ -102,3 +102,24 @@ def preprocess_image(
 
     distances = (distances <= 0).astype(np.float32)
     return image, coords, distances
+
+
+def compute_iou(mask2, mask1):
+    intersection = (mask1 * mask2).sum()
+    if intersection == 0:
+        return 0.0
+
+    union = torch.logical_or(mask1, mask2).to(torch.int).sum()
+    return intersection / union
+
+
+def coverage_threshold(mask2, mask1):
+    """
+    To compute how much of mask2 (gt) is covered by mask1 (predicted shape)
+    """
+    intersection = (mask1 * mask2).to(torch.int).count_nonzero()
+    if intersection == 0:
+        return 0.0
+
+    union = mask1[mask1 == 1].count_nonzero()
+    return intersection / union
